@@ -1,0 +1,49 @@
+---
+description: Docker Compose rules for Portainer stacks on Unraid
+globs: "**/compose.yaml"
+alwaysApply: false
+---
+
+# Docker Compose Guidelines (Portainer on Unraid)
+
+These compose files are used as **stacks in Portainer**. The host is an **Unraid server** where Portainer is installed.
+
+## Data and config paths
+
+- **Always** use the Unraid appdata path for persistent data and config:
+  - **Pattern:** `/mnt/user/appdata/<app-name>/...`
+- Replace `<app-name>` with the stack/app name (e.g. `librespeed`, `redis`, `immich`).
+- Map subfolders as needed (e.g. `/mnt/user/appdata/<app-name>/config`, `/mnt/user/appdata/<app-name>/data`).
+
+## Examples
+
+```yaml
+volumes:
+  - /mnt/user/appdata/librespeed/config:/config
+  - /mnt/user/appdata/redis:/data
+  - /mnt/user/appdata/myapp/data:/app/data
+```
+
+## LinuxServer.io images
+
+When using **LinuxServer.io** images (`lscr.io/linuxserver/...`), include:
+
+- **PUID** and **PGID** — User/group ID the container runs as; files created in bind-mounted volumes get this ownership (avoids root-owned files on the host). On Unraid, use your Unraid user’s UID/GID (often `99`/`100` for `nobody`/`users`, or your own if you run as a different user).
+- **TZ** — Container timezone. Use IANA timezone names. Default for this project: **`Asia/Kolkata`**.
+
+```yaml
+environment:
+  - PUID=99
+  - PGID=100
+  - TZ=Asia/Kolkata
+```
+
+Use `Asia/Kolkata` (not `Asia/Calcutta`) for Indian Standard Time (IST, UTC+5:30).
+
+## When creating a new stack
+
+1. Choose a short **app-name** (folder name under `appdata`).
+2. Define all host paths as `/mnt/user/appdata/<app-name>/...`.
+3. Use `compose.yaml` (or `docker-compose.yaml`) so Portainer can deploy the stack.
+4. Prefer `restart: unless-stopped` or `restart: always` for long-running services.
+5. For LinuxServer.io images: set PUID, PGID, and TZ=Asia/Kolkata.
